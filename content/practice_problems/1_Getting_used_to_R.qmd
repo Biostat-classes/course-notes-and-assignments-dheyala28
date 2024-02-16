@@ -235,6 +235,10 @@ str(sleep)
 Change the column named *BodyWt* to *Body_weight*"\* in the sleep
 dataset.
 
+```{r}
+colnames(sleep)[colnames(sleep) == "BodyWt"] <- "Body_weight"
+```
+
 ADD ANY R CHUNKS YOU USED TO COMPLETE THE TASK.
 
 #### 6
