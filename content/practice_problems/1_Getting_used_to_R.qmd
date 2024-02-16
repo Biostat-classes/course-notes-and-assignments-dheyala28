@@ -246,6 +246,9 @@ ADD ANY R CHUNKS YOU USED TO COMPLETE THE TASK.
 Produce a plot of how *TotalSleep* differs between primates and other
 species. What is this plot showing?
 
+This plot is showing the difference in total sleep time between
+different species and primates.
+
 Note, as of early 2020 R no longer reads in strings as factors! This
 means the Primate column, which is full of "Yes"s and "No"s, reads in as
 words and R doesn't know how to plot them. There are many ways to handle
@@ -258,6 +261,10 @@ sleep <- read.csv("http://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/mast
 
 If you do this, you'll need to rechange anything you previously updated
 to the object (like renaming the BodyWt column).
+
+```{r}
+colnames(sleep)[colnames(sleep) == "Body_weight"] <- "BodyWt"
+```
 
 You can also modify a single column for the actual object
 
@@ -274,7 +281,19 @@ plot(BodyWt ~ factor(Primate), data = sleep)
 NOTE YOU CAN ADD A PLOT TO THE DOCUMENT TOO! AMEND THE BELOW AS NEEDED.
 
 ```{r}
-plot(cars)
+my_dataset <- read.csv("http://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/sleep.csv", stringsAsFactors = T)
+
+```
+
+```{r}
+sleep$Primate <- factor(sleep$Primate)
+```
+
+```{r}
+plot(sleep$Primate ~ factor(Primate), data = sleep)
+plot(sleep$Primate, sleep$TotalSleep, 
+     xlab = "Primate", ylab = "Total Sleep",
+     main = "Total Sleep Time: Primates vs Other Species")
 ```
 
 #### 7
