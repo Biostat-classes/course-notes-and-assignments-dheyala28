@@ -126,7 +126,7 @@ Determine what the ":" does! Complete the following sentence:
 The : means makes a list from the bottom number to the top number that
 includes all integers in the interval.
 
-#### 2 
+#### 2
 
 Now try to guess the output of these commands
 
@@ -177,6 +177,27 @@ being less than 12 but greater that 7
 Is `-1:2` the same as `(-1):2` or `-(1:2)`? INSERT AN R CHUNK HERE AND
 RUN EACH OF THESE COMMANDS. Then state what each of these does.
 
+`-1:2 is the same as`(-1):2
+
+```{r}
+-1:2
+```
+
+-1:2 means each element in the sequence is incremented by 1 starting
+from -1 until it reaches 2
+
+```{r}
+(-1):2
+```
+
+(-1):2 generates the sequence of integers from -1 to 2
+
+```{r}
+-(1:2)
+```
+
+This negates each element of the sequence of integers from 1 to 2
+
 ### Data input, plotting, and tests
 
 You can read in a dataset from the internet following this protocol.
@@ -197,6 +218,17 @@ How many rows does the **sleep** data set have (hint: `?dim`)? What kind
 of data is stored in each variable?
 
 ENTER ANSWERS HERE. ADD ANY R CHUNKS YOU USED TO FIND THE ANSWER.
+
+It contains 20 rows. The extra variable represents extra hours of sleep.
+The group variable indicates different groups or conditions. The ID
+variable represents unique identifiers for the individuals in the
+dataset.
+
+```{r}
+data(sleep)
+dim(sleep)
+str(sleep)
+```
 
 #### 5
 
