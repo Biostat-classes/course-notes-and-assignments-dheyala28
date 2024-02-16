@@ -140,6 +140,38 @@ INSERT AN R CHUNK HERE AND RUN EACH OF THESE COMMANDS. Add a new chunk
 by clicking the *Insert Chunk* button on the toolbar or by pressing
 *Ctrl+Alt+I*. Then state what each of these does.
 
+```{r}
+length(x)
+```
+
+length returns the number of items
+
+```{r}
+max(x)
+
+```
+
+max returns the largest number in the set
+
+```{r}
+x[x<10]
+```
+
+x\[x\<10\] returns the elements of x that are less than 10
+
+```{r}
+x^2
+```
+
+x\^2 returns the square of the values of x
+
+```{r}
+x[x<12 & x>7]
+```
+
+x\[x\<12 & x\>7\] returns the values that satisfy both conditions of x
+being less than 12 but greater that 7
+
 #### 3
 
 Is `-1:2` the same as `(-1):2` or `-(1:2)`? INSERT AN R CHUNK HERE AND
