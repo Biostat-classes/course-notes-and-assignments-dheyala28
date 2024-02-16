@@ -236,7 +236,7 @@ Change the column named *BodyWt* to *Body_weight*"\* in the sleep
 dataset.
 
 ```{r}
-colnames(sleep)[colnames(sleep) == "BodyWt"] <- "Body_weight"
+colnames(sleep)[colnames(sleep) == "BodyWt"] -> "Body_weight"
 ```
 
 ADD ANY R CHUNKS YOU USED TO COMPLETE THE TASK.
@@ -263,7 +263,7 @@ If you do this, you'll need to rechange anything you previously updated
 to the object (like renaming the BodyWt column).
 
 ```{r}
-colnames(sleep)[colnames(sleep) == "Body_weight"] <- "BodyWt"
+colnames(sleep)[colnames(sleep) == "Body_weight"] -> "BodyWt"
 ```
 
 You can also modify a single column for the actual object
@@ -282,18 +282,19 @@ NOTE YOU CAN ADD A PLOT TO THE DOCUMENT TOO! AMEND THE BELOW AS NEEDED.
 
 ```{r}
 my_dataset <- read.csv("http://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/sleep.csv", stringsAsFactors = T)
-
 ```
 
 ```{r}
-sleep$Primate <- factor(sleep$Primate)
+plot(BodyWt ~ factor(Primate), data = sleep)
 ```
 
 ```{r}
-plot(sleep$Primate ~ factor(Primate), data = sleep)
-plot(sleep$Primate, sleep$TotalSleep, 
-     xlab = "Primate", ylab = "Total Sleep",
-     main = "Total Sleep Time: Primates vs Other Species")
+library(ggplot2)
+sleep <- read.csv("http://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/sleep.csv", stringsAsFactors = TRUE)
+ggplot(sleep, aes(x = factor(Primate), y = TotalSleep, fill = factor(Primate)))
+  geom_boxplot() 
+  labs(x = "Primate", y = "Total Sleep Time")
+ theme_minimal()
 ```
 
 #### 7
@@ -303,6 +304,27 @@ consider. First plot how *TotalSleep* is explained by *BrainWt*. Are
 there any issues with the data? Exclude any outlier and fit a linear
 model to obtain the p-value for the model (hint: summary()). What does
 this imply?
+
+```{r}
+ggplot(sleep, aes(x = BrainWt, y = TotalSleep)) +
+  geom_point() +
+  labs(x = "Brain Weight", y = "Total Sleep Time") +
+  theme_minimal()
+```
+
+```{r}
+summary(sleep)
+```
+
+```{r}
+model <- lm(TotalSleep ~ BrainWt, data = sleep)
+summary(model)
+```
+
+The p-value for the model indicates the significance of the relationship
+between TotalSleep and BrainWt. Because the p-value is 0.00578, which is
+below the significance level of 0.05, it implies that the relationship
+is statistically significant.
 
 ENTER ANSWERS HERE. ADD ANY R CHUNKS YOU USED TO FIND THE ANSWER.
 

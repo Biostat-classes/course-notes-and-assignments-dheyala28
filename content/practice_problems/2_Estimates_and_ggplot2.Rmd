@@ -508,6 +508,20 @@ replace those with ggplot2 and do some more.
 First plot how TotalSleep is explained by BrainWt (remember the issues
 with the data). Use ggplot2 to plot the relationship.
 
+```{r}
+data_clean <- na.omit(sleep)
+```
+
+```{r}
+ggplot(data_clean, aes(x = BrainWt, y = TotalSleep)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship between Brain Weight and Total Sleep",
+       x = "Brain Weight (g)",
+       y = "Total Sleep (hours)") +
+  theme_minimal()
+```
+
 ### 2
 
 Next color code each plot point by whether or not its a primate. In
@@ -515,12 +529,70 @@ order to do this you can use the Primate column or (following class
 code) make a new column called Taxa to represent the information
 (hint:search for “ revalue”). Make sure axes are well-labeled.
 
+```{r}
+data <- mutate(sleep, Taxa = ifelse(Primate == "yes", "Primate", "Non-Primate"))
+```
+
+```{r}
+ggplot(data, aes(x = BrainWt, y = TotalSleep, color = Taxa)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship between Brain Weight and Total Sleep",
+       x = "Brain Weight (g)",
+       y = "Total Sleep (hours)",
+       color = "Taxa") +
+  theme_minimal()
+```
+
 ### 3
 
 Let’s work with histograms. \* What type of variation do we see in total
 time spent sleeping? Create a histogram to explore this issue. \* Facet
 the graph you created based on whether or not the animal is a primate
 (Primate column). \* Now only graph the data for primates.
+
+```{r}
+ggplot(sleep, aes(x = TotalSleep)) +
+  geom_histogram(binwidth = 1, fill = "pink", color = "black") +
+  labs(title = "Distribution of Total Sleep Time",
+       x = "Total Sleep Time (hours)",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(sleep, aes(x = TotalSleep)) +
+  geom_histogram(binwidth = 1, fill = "pink", color = "black") +
+  labs(title = "Distribution of Total Sleep Time",
+       x = "Total Sleep Time (hours)",
+       y = "Frequency") +
+  facet_grid(. ~ Primate) +
+  theme_minimal()
+```
+
+```{r}
+ggplot(sleep[sleep$Primate == "Y",], aes(x = TotalSleep)) +
+  geom_histogram(binwidth = 1, fill = "blue", color = "black") + 
+  #below here is ylabel, xlabel, and main title
+  ylab("Frequency") +
+  xlab("Total Sleep (hours)") +
+  ggtitle("Distribution of Total Sleep Time for Primates") +
+  #theme sets sizes, text, etc
+  theme(axis.title.x = element_text(face="bold", size=13), 
+        axis.title.y = element_text(face="bold", size=13), 
+        axis.text.y  = element_text(size=10),
+        axis.text.x  = element_text(size=10), 
+        legend.text =element_text(size=10),
+        legend.title = element_text(size=10, face="bold"),
+        plot.title = element_text(hjust = 0.5, face="bold", size=20),
+        # change plot background, grid lines, etc (just examples so you can see)
+        panel.background = element_rect(fill="pink"),
+        panel.grid.minor.y = element_line(size=3),
+        panel.grid.major = element_line(colour = "black"),
+        plot.background = element_rect(fill="gray"),
+        legend.background = element_rect(fill="gray"),
+        strip.text.x = element_text(size = 10, colour = "purple"))
+```
 
 ### 4
 
