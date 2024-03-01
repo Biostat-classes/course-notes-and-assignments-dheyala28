@@ -602,6 +602,12 @@ Primate/Non-Primate; note there are multiple ways to do this!) – use a
 95% confidence interval for the bar \* Predation risk (as a factor!) –
 use 1 standard error for the bar. Note the difference!
 
+```{r}
+str(sleep) #just a reminder
+sleep$Primate <- factor(sleep$Primate)
+levels(sleep$Primate)
+```
+
 ## Estimates and Certainty Concepts
 
 ### 5
