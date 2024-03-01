@@ -608,11 +608,60 @@ sleep$Primate <- factor(sleep$Primate)
 levels(sleep$Primate)
 ```
 
+```{r}
+
+```
+
+```{r}
+levels(sleep$Primate)<- c("Non-Primate","Primate") 
+```
+
+```{r}
+sd(sleep[sleep$Primate == "Non-Primate", "TotalSleep"], na.rm = T) / 
+  sqrt(length(na.omit(sleep[sleep$Primate == "Non-Primate", "TotalSleep"])))
+```
+
+```{r}
+sd(sleep[sleep$Primate == "Primate", "TotalSleep"], na.rm = T) / 
+  sqrt(length(na.omit(sleep[sleep$Primate == "Primate", "TotalSleep"])))
+```
+
+```{r}
+library(Rmisc)
+library(plyr)
+```
+
+```{r}
+sleep_by_primate <- summarySE(sleep, measurevar = "TotalSleep", groupvars = "Primate", na.rm = T)
+
+sleep_by_primate
+```
+
+```{r}
+library(ggplot2)
+
+ggplot (sleep_by_primate
+       , aes(x=Primate, y=TotalSleep)) +
+  geom_col(size = 3) +
+  geom_errorbar(aes(ymin=TotalSleep-ci, ymax=TotalSleep+ci), size=1.5) +
+  ylab("Total sleep (hours per day")+ggtitle("Sleep differences between Primates and Non-Primates")+
+  theme(axis.title.x = element_text(face="bold", size=10), 
+        axis.title.y = element_text(face="bold", size=10), 
+        axis.text.y  = element_text(size=10),
+        axis.text.x  = element_text(size=10), 
+        legend.text =element_text(size=10),
+        legend.title = element_text(size=10, face="bold"),
+        plot.title = element_text(hjust = 0.5, face="bold", size=20))
+```
+
 ## Estimates and Certainty Concepts
 
 ### 5
 
 What does a 95% confidence interval mean?
+
+A 95% confidence interval suggests the range of values that you can be
+95% certain contains the true mean of a population.
 
 ### 6
 
