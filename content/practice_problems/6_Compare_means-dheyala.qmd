@@ -1,0 +1,391 @@
+---
+title: "Compare means among groups"
+bibliography: ../references.bib
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+<!-- COMMENT NOT SHOW IN ANY OUTPUT: Code chunk below sets overall defaults for .qmd file; these inlcude showing output by default and looking for files relative to .Rpoj file, not .qmd file, which makes putting filesin different folders easier  -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+Remember you should
+
+-   add code chunks by clicking the *Insert Chunk* button on the toolbar
+    or by pressing *Ctrl+Alt+I* to answer the questions!
+-   **knit** your file to produce a markdown version that you can see!
+-   save your work often
+    -   **commit** it via git!
+    -   **push** updates to github
+
+## Overview
+
+This practice reviews the [Compare means among groups
+lecture](../chapters/Compare_means_among_populations.qmd).
+
+## Examples
+
+We will run ANOVA's using the *lm* function to connect them to other
+test. First, build the model
+
+```{r}
+iris_anova <- lm(Sepal.Length~Species, iris)
+```
+
+Then use the object it created to test assumptions
+
+```{r}
+par(mfrow = c(2,2))
+plot(iris_anova)
+```
+
+If assumptions are met, check the p-value using the *summary* or *Anova*
+function.
+
+```{r}
+summary(iris_anova)
+library(car)
+Anova(iris_anova, type = "III")
+```
+
+If the overall test is significant, carry out post hoc tests (Tukey
+shown here for all pairs, as most common)
+
+```{r}
+library(multcomp)
+compare_cont_tukey <- glht(iris_anova, linfct = mcp(Species = "Tukey"))
+summary(compare_cont_tukey)
+```
+
+If assumptions are not met, we can use the Kruskal Wallis non-parametric
+test and associated post hoc tests.
+
+```{r}
+kruskal.test(Sepal.Length ~ Species, data = iris)
+pairwise.wilcox.test(iris$Sepal.Length, 
+                          iris$Species, 
+                          p.adjust.method="holm")
+```
+
+or a bootstrap alternative
+
+```{r}
+library(WRS2)
+t1waybt(Sepal.Length~Species, iris)
+bootstrap_post_hoc <- mcppb20(Sepal.Length~Species, iris)
+p.adjust(as.numeric(bootstrap_post_hoc$comp[,6]), "holm")
+```
+
+For 2 groups, the *boot.t.test* function in the **MKinfer** package is
+also an option.
+
+## Just for practice
+
+### 1
+
+Use the iris dataset in R to determine if petal length differs among
+species. *Do this problems using ANOVA, Kruskal-Wallis, and
+bootstrapping methods. Make sure you can plot the data and carry out
+multiple comparison methods as needed. Also be sure to understand the
+use of coefficients and adjusted R^2^ values and where to find them.*
+
+```{r}
+
+data(iris)
+
+anova_result <- aov(Petal.Length ~ Species, data = iris)
+
+summary(anova_result)
+
+boxplot(Petal.Length ~ Species, data = iris)
+
+```
+
+```{r}
+kruskal_result <- kruskal.test(Petal.Length ~ Species, data = iris)
+
+print(kruskal_result)
+
+boxplot(Petal.Length ~ Species, data = iris)
+
+```
+
+```{r}
+mean_diff <- function(data, indices) {
+  group_means <- tapply(data[indices, "Petal.Length"], data[indices, "Species"], mean)
+  mean_diff <- diff(group_means)
+  return(mean_diff)
+}
+
+set.seed(123)  # for reproducibility
+bootstrap_results <- boot(data = iris, statistic = mean_diff, R = 1000)
+
+print(bootstrap_results)
+
+hist(bootstrap_results$t, breaks = 30, main = "Bootstrap Distribution of Mean Differences",
+     xlab = "Mean Difference", ylab = "Frequency")
+
+```
+
+### 2
+
+Data on plant heights (in cm) for plants grown with a new and old
+formulation of fertilizer can be found at
+
+<https://docs.google.com/spreadsheets/d/e/2PACX-1vSUVowOKlmTic4ekL7LSbwDcqrsDSXv5K_c4Qyfcvz1lLE1_iINmGzy0zMGxY7z5DImlUErK4S2wY7Y/pub?gid=0&single=true&output=csv>.
+
+Analyze this data using the t.test function and the lm function to
+convince yourself that t-tests are special cases of ANOVAs, which are
+special cases of linear models!
+
+```{r}
+str(plant_data)
+```
+
+```{r}
+
+install.packages("readr")  # If not already installed
+library(readr)
+
+data_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vSUVowOKlmTic4ekL7LSbwDcqrsDSXv5K_c4Qyfcvz1lLE1_iINmGzy0zMGxY7z5DImlUErK4S2wY7Y/pub?gid=0&single=true&output=csv"
+plant_data <- read_csv(data_url)
+
+str(plant_data)
+
+summary(plant_data)
+
+t_test_result <- t.test(height ~ Formulation, data = plant_data)
+print(t_test_result)
+
+lm_model <- lm(height ~ Formulation, data = plant_data)
+summary(lm_model)
+
+anova_result <- anova(lm_model)
+print(anova_result)
+
+```
+
+## For the following questions, pick the appropriate method for analyzing the question. Use a plot of the data and/or model analysis to justify your decision. Make sure you can carry out multiple comparison methods as needed. Also be sure to understand the use of coefficients and adjusted R^2^ values and where to find them.
+
+### 3
+
+Data on sugar cane yield for multiple fields is available using
+
+read.table("<https://docs.google.com/spreadsheets/d/e/2PACX-1vRjstKreIM6UknyKFQCtw2_Q6itY9iOAVWO1hUNZkBFL8mwVssvTevqgzV22YDKCUeJq0HBDrsBrf5O/pub?gid=971470377&single=true&output=tsv>",
+header = T, stringsAsFactors = T)
+
+More info on the data can be found at
+<http://www.statsci.org/data/oz/cane.html>. Is there evidence that
+location (DistrictPosition column) impacts yield (Tonn.Hect column)? If
+so, which areas are driving this distance?
+
+```{r}
+
+install.packages("readr")  # If not already installed
+library(readr)
+
+data_url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRjstKreIM6UknyKFQCtw2_Q6itY9iOAVWO1hUNZkBFL8mwVssvTevqgzV22YDKCUeJq0HBDrsBrf5O/pub?gid=971470377&single=true&output=tsv"
+cane_data <- read_tsv(data_url)
+
+str(cane_data)
+
+summary(cane_data)
+
+anova_result <- aov(Tonn.Hect ~ DistrictPosition, data = cane_data)
+print(anova_result)
+
+tukey_result <- TukeyHSD(anova_result)
+print(tukey_result)
+
+```
+
+### 4
+
+Data on FEV (forced expiratory volume), a measure of lung function, can
+be found at
+
+<http://www.statsci.org/data/general/fev.txt>
+
+More information on the dataset is available at
+
+<http://www.statsci.org/data/general/fev.html>.
+
+Is there evidence that FEV depends on gender? If so, which gender has
+the higher FEV score? How much variance does gender explain?
+
+```{r}
+
+install.packages("readr")  # If not already installed
+library(readr)
+
+data_url <- "http://www.statsci.org/data/general/fev.txt"
+fev_data <- read_delim(data_url, delim = "\t")
+
+str(fev_data)
+
+summary(fev_data)
+
+lm_model <- lm(FEV ~ Gender, data = fev_data)
+
+summary(lm_model)
+
+r_squared <- summary(lm_model)$r.squared
+cat("Variance explained by gender (R-squared):", r_squared, "\n")
+
+```
+
+### 5
+
+The following data are human blood clotting times (in minutes) of
+individuals given one of two different drugs.
+
+| Drug B | Drug G |
+|:------:|:------:|
+|  8.8   |  9.9   |
+|  8.4   |  9.0   |
+|  7.9   |  11.1  |
+|  8.7   |  9.6   |
+|  9.1   |  8.7   |
+|  9.6   |  10.4  |
+|        |  9.5   |
+
+Test the hypothesis that the mean clotting times are equal for the two
+groups
+
+-   Estimating the variance from the data
+-   Using rank transform analysis
+-   Using a permutation test
+-   Using a bootstrap test
+
+Test the hypothesis that the mean clotting times are equal for the two
+groups
+
+-   Estimating the variance from the data
+-   Using rank transform analysis
+-   Using a permutation test
+-   Using a bootstrap test
+
+```{r}
+
+clotting_times_b <- c(8.8, 9.9, 8.4, 9.0, 7.9, 11.1, 8.7, 9.6, 9.1)
+clotting_times_g <- c(8.7, 9.6, 10.4, 9.5)
+
+
+clotting_times <- c(clotting_times_b, clotting_times_g)
+
+
+group_b <- rep("B", length(clotting_times_b))
+group_g <- rep("G", length(clotting_times_g))
+groups <- c(group_b, group_g)
+
+
+estimate_variance <- function(data) {
+  var_est <- var(data)
+  return(var_est)
+}
+
+
+rank_transform <- function(data) {
+  ranks <- rank(data)
+  return(ranks)
+}
+
+
+permutation_test <- function(data, groups) {
+  observed_diff <- mean(data[groups == "B"]) - mean(data[groups == "G"])
+  num_perm <- 10000
+  perm_diffs <- numeric(num_perm)
+  for (i in 1:num_perm) {
+    perm_groups <- sample(groups)
+    perm_diffs[i] <- mean(data[perm_groups == "B"]) - mean(data[perm_groups == "G"])
+  }
+  p_value <- mean(abs(perm_diffs) >= abs(observed_diff))
+  return(p_value)
+}
+
+
+bootstrap_test <- function(data, groups) {
+  num_boot <- 10000
+  boot_diffs <- numeric(num_boot)
+  for (i in 1:num_boot) {
+    boot_indices <- sample(length(data), replace = TRUE)
+    boot_b <- data[boot_indices][groups[boot_indices] == "B"]
+    boot_g <- data[boot_indices][groups[boot_indices] == "G"]
+    boot_diffs[i] <- mean(boot_b) - mean(boot_g)
+  }
+  p_value <- mean(abs(boot_diffs) >= abs(mean(clotting_times_b) - mean(clotting_times_g)))
+  return(p_value)
+}
+
+
+variance_test <- estimate_variance(clotting_times)
+rank_test <- wilcox.test(clotting_times ~ groups)$p.value
+permutation_p_value <- permutation_test(clotting_times, groups)
+bootstrap_p_value <- bootstrap_test(clotting_times, groups)
+
+cat("Estimating the variance from the data: p-value =", variance_test, "\n")
+cat("Using rank transform analysis: p-value =", rank_test, "\n")
+cat("Using a permutation test: p-value =", permutation_p_value, "\n")
+cat("Using a bootstrap test: p-value =", bootstrap_p_value, "\n")
+
+```
+
+### 6
+
+(Example from Handbook on Biological Statistics) Odd (stunted, short,
+new) feathers were compared in color to typical feathers in Northern
+Flickers (*Colaptes auratus*) [@wiebe2002] . Data is at
+
+<https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/wiebe_2002_example.csv>
+
+Test the hypothesis that odd and typical feathers did not differ using
+
+-   a Student's t test and/or lm
+-   a rank test
+-   bootstrapping
+
+```{r}
+
+install.packages("readr")  # If not already installed
+library(readr)
+
+data_url <- "https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/wiebe_2002_example.csv"
+feather_data <- read_csv(data_url)
+
+
+str(feather_data)
+
+
+summary(feather_data)
+
+
+t_test_result <- t.test(Color ~ FeatherType, data = feather_data)
+lm_model <- lm(Color ~ FeatherType, data = feather_data)
+
+
+rank_test_result <- wilcox.test(Color ~ FeatherType, data = feather_data)
+
+bootstrap_test <- function(data, formula) {
+  num_boot <- 10000
+  boot_diffs <- numeric(num_boot)
+  for (i in 1:num_boot) {
+    boot_data <- data[sample(nrow(data), replace = TRUE), ]
+    boot_diffs[i] <- diff(coef(lm(formula, data = boot_data)))
+  }
+  return(boot_diffs)
+}
+
+boot_diffs <- bootstrap_test(feather_data, Color ~ FeatherType)
+bootstrap_p_value <- mean(boot_diffs >= diff(coef(lm_model)))
+
+cat("Student's t-test (or lm): p-value =", t_test_result$p.value, "\n")
+cat("Rank test: p-value =", rank_test_result$p.value, "\n")
+cat("Bootstrap test: p-value =", bootstrap_p_value, "\n")
+
+```
+
+Note we will return to this question next week!
