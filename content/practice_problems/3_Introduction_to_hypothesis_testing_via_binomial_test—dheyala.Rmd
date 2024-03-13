@@ -101,7 +101,119 @@ Signal = 19/25 - 1/2 = 0.26
 
 **Null Distribution**
 
+To construct a null distribution using sampling or simulation, I would
+simulate data under the assumption that the null hypothesis is true.
+This means generating data that represents what you would expect to
+observe if there were no effect or difference. The null hypothesis
+assumes no preference, meaning the probability of someone turning their
+right ear to the speaker is 0.5, and the probability of turning their
+left ear to the speaker is also 0.5.
+
 ```{r}
+
+n <- 25  
+p_null <- 0.5 
+
+num_simulations <- 10000
+
+null_distribution <- numeric(num_simulations)
+
+for (i in 1:num_simulations) {
+ 
+  simulated_data <- sample(c("right", "left"), n, replace = TRUE, prob = c(p_null, 1 - p_null))
+  
+  observed_proportion <- sum(simulated_data == "right") / n
+  
+  null_distribution[i] <- observed_proportion
+}
+
+```
+
+```{r}
+head(null_distribution[i])
+```
+
+```{r}
+library(ggplot2)
+
+ggplot() +
+  geom_histogram(data = data.frame(observed_proportion = null_distribution),
+                 aes(x = observed_proportion),
+                 bins = 
+```
+
+```{r}
+
+n <- 25
+observed_right <- 19
+
+
+p_null <- 0.5
+
+
+B <- 10000  
+null_distribution <- rbinom(B, n, p_null) / n
+
+
+null_mean <- mean(null_distribution)
+signal <- observed_right / n - null_mean
+
+signal
+```
+
+**p-values by simulation and binomial**
+
+```{r}
+
+n <- 25
+observed_right <- 19
+
+p_null <- 0.5
+
+B <- 10000  
+null_distribution <- rbinom(B, n, p_null) / n
+
+null_mean <- mean(null_distribution)
+signal <- observed_right / n - null_mean
+
+p_value_simulation <- 2 * mean(abs(null_distribution - null_mean) >= abs(signal))
+
+p_value_simulation
+```
+
+```{r}
+
+n <- 25
+observed_right <- 19
+
+p_null <- 0.5
+
+p_value_binomial <- pbinom(observed_right - 1, n, p_null) + (1 - pbinom(observed_right, n, p_null))
+
+p_value_binomial <- 2 * p_value_binomial
+
+p_value_binomial
+```
+
+The p-values are very different, as the binomial one is a lot greater
+than the simulated one.
+
+```{r}
+
+p_value <- 2 * pnorm(-abs(signal))
+
+p_value
+```
+
+```{r}
+
+n <- 25
+observed_right <- 19
+
+p_null <- 0.5
+
+B <- 10000  
+null_distribution <- rbinom(B, n, p_null) / n
 
 ```
 
@@ -111,9 +223,36 @@ binom.test(x=19, n=25, p = 0.5,
            conf.level = 0.95)
 ```
 
+The confidence interval provides a range of values for the true
+proportion of people who turn their right ear to the speaker, while the
+hypothesis test determines whether there is significant evidence to
+reject the null hypothesis that the proportion is equal to 0.5. If the
+confidence interval includes 0.5, it suggests that the observed
+proportion is not significantly different from 0.5 at the 5%
+significance level. If the confidence interval does not include 0.5 and
+the p-value is less than 0.05, it suggests that there is significant
+evidence to reject the null hypothesis in favor of the alternative
+hypothesis.
+
 ```{r}
 
+z <- qnorm(0.975)
+SE <- sqrt(p_null * (1 - p_null) / n)
+lower <- observed_right / n - z * SE
+upper <- observed_right / n + z * SE
+```
 
+```{r}
+
+n <- 25
+observed_right <- 19
+
+p_null <- 0.5
+
+B <- 10000  
+null_distribution <- rbinom(B, n, p_null) / n
+
+null_distribution
 ```
 
 ### 2
