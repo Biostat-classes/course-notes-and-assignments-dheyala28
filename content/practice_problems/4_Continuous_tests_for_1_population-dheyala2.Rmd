@@ -1,0 +1,333 @@
+---
+title: "Tests for continuous data from one sample"
+bibliography: ../references.bib
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+<!-- COMMENT NOT SHOW IN ANY OUTPUT: Code chunk below sets overall defaults for .qmd file; these inlcude showing output by default and looking for files relative to .Rpoj file, not .qmd file, which makes putting filesin different folders easier  -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+Remember you should
+
+-   add code chunks by clicking the *Insert Chunk* button on the toolbar
+    or by pressing *Ctrl+Alt+I* to answer the questions!
+-   **knit** your file to produce a markdown version that you can see!
+-   save your work often
+    -   **commit** it via git!
+    -   **push** updates to github
+
+## Overview
+
+This practice reviews the [Tests for continuous data from one sample
+lecture](../chapters/Tests_for_continuous_data_from_one_sample.qmd).
+
+### Examples
+
+From lecture! Consider if average height of males training at the
+Australian Institute of Sport is different than average of human
+population.
+
+These are all one sample tests, but they differ in what we know. If we
+know the variance of our population, we use a z test (function in BSDA
+package).
+
+```{r}
+sport <- read.table("http://www.statsci.org/data/oz/ais.txt", header = T)
+library(BSDA)
+z.test(sport[sport$Sex == "male", "Ht"], mu = 175.6, sigma.x=7)
+```
+
+If we don't, we use a t-test
+
+```{r}
+t.test(sport[sport$Sex == "male", "Ht"], mu = 175.6)
+```
+
+These both assume the means of the data are normal! If we want to relax
+that assumption, we can use the Wilcoxon test (also known as
+Mann-Whitney test, signed binary transform, or other terms!). This
+assumes the distribution of means is symmetric.
+
+```{r}
+wilcox.test(sport[sport$Sex == "male", "Ht"], mu = 175.6)
+```
+
+or the sign-test/media test.
+
+```{r}
+SIGN.test(sport[sport$Sex == "male", "Ht"], md = 175.6)
+```
+
+Note this is just transforming data to 1/0 and doing a binomial test!
+
+```{r}
+above_175.6 <- nrow(sport[sport$Sex == "male" & sport$Ht > 175.6,])
+binom.test(above_175.6, nrow(sport[sport$Sex == "male",]))
+```
+
+We can also bootstrap the data.
+
+```{r}
+number_of_simulations <- 1000
+library(ggplot2)
+boostrap_data<- sport[sport$Sex == "male", "Ht"]
+boostrap_outcomes <- data.frame(mean = rep(NA, number_of_simulations), sd = NA)
+for (i in 1:number_of_simulations){
+iris_bootstrap <-sample(boostrap_data, length(boostrap_data), replace = T)
+boostrap_outcomes$mean[i] <- mean(iris_bootstrap)
+boostrap_outcomes$sd[i] <- sd(iris_bootstrap)
+}
+ggplot(boostrap_outcomes, aes(x=mean)) +
+  geom_histogram(color="black") +
+  labs(title=expression(paste("Bootstrapped means")),
+       x= "Mean value",
+       y= "Frequency")
+```
+
+and find associated quantile-based 95% confidence intervals:
+
+```{r}
+quantile(boostrap_outcomes$mean, probs=c(.025, .975) ) 
+```
+
+or using functions in the *boot* library
+
+```{r}
+library(boot)
+results <- boot(data=boostrap_data, statistic = function(x, inds) mean(x[inds]),
+   R=number_of_simulations)
+ggplot(data.frame(results$t), aes(x=results.t)) +
+  geom_histogram(color="black") +
+  labs(title=expression(paste("Bootstrapped means")),
+       x= "Mean value",
+       y= "Frequency")
+quantile( results$t, probs=c(.025, .975) ) 
+boot.ci(results)       
+
+
+```
+
+## Let's practice!
+
+### Recognizing and assessing normality
+
+#### 1
+
+Using the qqplot_example.R code, examine the following distributions
+and, for the continuous distributions (marked with a “\*”), observe how
+a normal probability plot (qqplot) can be used to visually test for
+approximate normality.
+
+-   \*Normal (u= 0; σ^2^= 1, 10, 100)
+-   \*Student's t (df = 1, 10, 30, & 100)
+-   \*Chi-square (df= 1, 2, 5, 30, 50)
+-   Bernoulli (P=0.1, 0.5, & 0.9)
+-   Binomial (P=0.05; N= 2, 5, 25, & 50); (P=0.25; N= 2, 5, 25, & 50);
+    (P=0.50; N= 2, 5, 25, & 50); (P=0.75; N= 2, 5, 25, & 50); (P=0.95;
+    N= 2, 5, 25, & 50)
+-   Poisson ( u= 2, 5, 10, 30, & 50)
+
+For this question, its easiest to just source the main file and see what
+happens. When you source a script, it is run in R without showing any
+console output (but graphs and objects are still produced!). Try
+*source("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/code_examples/qqplot_example.R")*
+
+```{r}
+source("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/code_examples/qqplot_example.R")
+```
+
+#### 2
+
+Review the central_limit_theorem.R code (remember
+
+```{r}
+library(VGAM)
+source("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/code_examples/central_limit_theorem.R")
+```
+
+if you need to convince/remind yourself how common normality of means is
+for even non-normal data.
+
+### Working with data (note some sample sizes may be too small for these to all be good ideas!)
+
+Make sure you are comfortable with null and alternative hypotheses for
+all examples. You should also feel comfortable graphing the data.
+
+#### 3
+
+Seven observers were shown, for a brief period, a grill with 161 flies
+impaled and were asked to estimate the number. The results are given by
+Cochran (1954). Based on five estimates, they were 183.2, 149.0, 154.0,
+167.2, 187.2, 158.0, and 143.0. Test the null hypothesis that the mean
+of the estimates is 161 flies.
+
+-   Assuming variance = 275
+-   Estimating the variance from the data
+-   Using rank transform analysis
+-   Using binary transform analysis
+
+Note there are several ways to load the data! You can make a list (since
+the list is short):
+
+H~0~: the mean of the estimates is 161 flies
+
+H~A~: the mean of the estimates is not 161 flies
+
+```{r}
+flies <- c(183.2, 149.0, 154.0, 167.2, 187.2, 158.0, 143.0 )
+```
+
+```{r}
+estimates <- c(183.2, 149.0, 154.0, 167.2, 187.2, 158.0, 143.0)
+null_mean <- 161
+variance <- 275
+
+sample_mean <- mean(estimates)
+
+t_test_known_variance <- t.test(estimates, mu = null_mean, alternative = "two.sided", conf.level = 0.95, var.equal = TRUE)
+print(t_test_known_variance)
+
+rank_estimates <- rank(estimates)
+mean_rank <- mean(rank_estimates)
+ss <- sum((rank_estimates - mean_rank)^2)
+var_rank <- ss / (length(estimates) - 1)
+
+t_test_rank_variance <- t.test(estimates, mu = null_mean, alternative = "two.sided", conf.level = 0.95, var.equal = FALSE)
+print(t_test_rank_variance)
+
+binary_estimates <- ifelse(estimates > sample_mean, 1, 0)
+prop_ones <- mean(binary_estimates)
+var_binary <- prop_ones * (1 - prop_ones)
+
+t_test_binary_variance <- t.test(estimates, mu = null_mean, alternative = "two.sided", conf.level = 0.95, var.equal = FALSE)
+print(t_test_binary_variance)
+
+t_test_binary_variance
+
+```
+
+or make a dataframe in a spreadsheet software (eg, Excel, Google Sheets)
+and then upload using a read.csv command. We did this in your
+introduction to R!
+
+**The p-value, 0.7551, is greater than 0.5. This suggests that there is
+evidence to not reject the null hypothesis and that the mean of the
+estimates is 161 flies.**
+
+#### 4
+
+Yields of 10 strawberry plants in a uniformity trial are given by Baker
+and Baker (1953) as 239, 176, 235, 217, 234, 216, 318, 190, 181, and 225
+g. Test the hypothesis that µ = 205 \* Assuming variance = 1500 \*
+Estimating the variance from the data \* Using rank transform analysis
+\* Using binary transform analysis
+
+H~0~: the mean is 205
+
+H~A~: the mean is not equal to 205
+
+```{r}
+
+yields <- c(239, 176, 235, 217, 234, 216, 318, 190, 181, 225)
+null_mean <- 205
+variance <- 1500
+
+sample_mean <- mean(yields)
+
+t_test_known_variance <- t.test(yields, mu = null_mean, alternative = "two.sided", conf.level = 0.95, var.equal = TRUE)
+print(t_test_known_variance)
+
+rank_yields <- rank(yields)
+mean_rank <- mean(rank_yields)
+ss <- sum((rank_yields - mean_rank)^2)
+var_rank <- ss / (length(yields) - 1)
+
+t_test_rank_variance <- t.test(yields, mu = null_mean, alternative = "two.sided", conf.level = 0.95, var.equal = FALSE)
+print(t_test_rank_variance)
+
+binary_yields <- ifelse(yields > sample_mean, 1, 0)
+prop_ones <- mean(binary_yields)
+var_binary <- prop_ones * (1 - prop_ones)
+
+t_test_binary_variance <- t.test(yields, mu = null_mean, alternative = "two.sided", conf.level = 0.95, var.equal = FALSE)
+print(t_test_binary_variance)
+
+t_test_binary_variance
+
+```
+
+**The p-value, 0.1903, is greater than 0.05, suggesting that there is
+evidence to not reject the null hypothesis. this suggests that the
+u=205.**
+
+#### 5
+
+Evolutionary geneticists predicts the family sex ratio will be 80%
+female in broods of eagles that successfully fledge \>3 young. Nests
+that fledge 3 or more chicks are very rare but a sample of 30 chicks are
+obtained from such nests and they yield 25 females and 5 males. Test the
+hypotheses that that: \* a) the sex ratio is 50% females \* b) the sex
+ratio is 80% females.
+
+a\) H~0~: The sex ratio is 50% females.
+H~A~: The sex ratio is not 50% females.
+
+b\) H~0~: The sex ratio is 80% females.
+H~A~: The sex ratio is not 80% females.
+
+```{r}
+
+observed_females_a <- 25
+total_chicks_a <- 30
+expected_proportion_a <- 0.5  # 50% females
+
+binom_test_a <- binom.test(observed_females_a, total_chicks_a, p = expected_proportion_a, alternative = "two.sided")
+print(binom_test_a)
+
+observed_females_b <- 25
+total_chicks_b <- 30
+expected_proportion_b <- 0.8  # 80% females
+
+binom_test_b <- binom.test(observed_females_b, total_chicks_b, p = expected_proportion_b, alternative = "two.sided")
+print(binom_test_b)
+
+```
+
+The p-value obtained from testing hypothesis A is 0.0003249, which is
+much smaller than the significance level of 0.05. This indicates that we
+have sufficient evidence to reject the null hypothesis that the true
+probability of success (female births) is equal to 0.5.
+
+The p-value obtained from testing hypothesis B is 0.8205, which is
+greater than the significance level of 0.05. This indicates that we do
+not have enough evidence to reject the null hypothesis that the true
+probability of success (female births) is equal to 0.8.
+
+#### 6
+
+Studies of flying snakes have led researchers to posit the mean
+undulation rate is 1.4 Hz. You wish to test this hypothesis using the
+small sample of undulation rates shown below. Create a small dataset of
+the paradise tree snake undulation rates and choose and justify a test
+you can use to assess the data.
+
+Undulation rates (in Hz): 0.9, 1.4, 1.2, 1.2, 1.3, 2.0, 1.4, 1.6
+
+#### 7
+
+Using data from Australian athletes
+(http://www.statsci.org/data/oz/ais.html for details), determine if the
+average male training at the Australian Institute of Sport differs in
+weight from the average Australian male (85.9 kg) using bootstrapping
+techniques. Data at
+
+```{r}
+sport <- read.table("http://www.statsci.org/data/oz/ais.txt", header = T, 
+                    stringsAsFactors = T)
+```
