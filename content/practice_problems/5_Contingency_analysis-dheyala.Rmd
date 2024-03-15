@@ -1,6 +1,9 @@
 ---
 title: "Compare proportions among groups"
 bibliography: ../references.bib
+editor: 
+  markdown: 
+    wrap: 72
 ---
 
 <!-- COMMENT NOT SHOW IN ANY OUTPUT: Code chunk below sets overall defaults for .qmd file; these inlcude showing output by default and looking for files relative to .Rpoj file, not .qmd file, which makes putting filesin different folders easier  -->
@@ -12,7 +15,8 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
 Remember you should
 
--   add code chunks by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I* to answer the questions!
+-   add code chunks by clicking the *Insert Chunk* button on the toolbar
+    or by pressing *Ctrl+Alt+I* to answer the questions!
 -   **knit** your file to produce a markdown version that you can see!
 -   save your work often
     -   **commit** it via git!
@@ -20,15 +24,19 @@ Remember you should
 
 ## Overview
 
-This practice reviews the [Compare means among groups lecture](../chapters/Compare_proportions_among_populations.qmd).
+This practice reviews the [Compare means among groups
+lecture](../chapters/Compare_proportions_among_populations.qmd).
 
 ## Examples
 
-Issue is we often get data in spreadsheet format (expanded/long or wide/summarized, each shown below), but we need to get a vector or matrix for chisq.test and related functions.
+Issue is we often get data in spreadsheet format (expanded/long or
+wide/summarized, each shown below), but we need to get a vector or
+matrix for chisq.test and related functions.
 
 ### The data
 
-Following the Everest example from class. Assume data is in a dataframe where each row is a group data point.
+Following the Everest example from class. Assume data is in a dataframe
+where each row is a group data point.
 
 ```{r}
 everest <- data.frame(Survived = c("Y","N","Y", "N"),
@@ -36,7 +44,8 @@ everest <- data.frame(Survived = c("Y","N","Y", "N"),
                       Number = c(1045, 32, 88, 8))
 ```
 
-Assume data is in a dataframe where each row is an individual data point.
+Assume data is in a dataframe where each row is an individual data
+point.
 
 ```{r}
 library(mirt)
@@ -45,7 +54,9 @@ everest_expand <- expand.table(everest)
 
 ### tests
 
-First, let's ask if the same amount of people used or did not use oxygen. WE can use the table command to summarize. Note the chisq.test, by default, assumes each group is equally likely!
+First, let's ask if the same amount of people used or did not use
+oxygen. WE can use the table command to summarize. Note the chisq.test,
+by default, assumes each group is equally likely!
 
 ```{r}
 table(everest_expand$Oxygen)
@@ -65,7 +76,8 @@ But this is better!
 binom.test(table(everest_expand$Oxygen))
 ```
 
-What if we wanted to compare to past years where 10% of climbers did not use oxygen? Note *table* function splits into alphabetical order.
+What if we wanted to compare to past years where 10% of climbers did not
+use oxygen? Note *table* function splits into alphabetical order.
 
 ```{r}
 binom.test(table(everest_expand$Oxygen), p=.1)
@@ -85,15 +97,18 @@ chisq.test(x = matrix(c(1045, 88, 32, 8), 2, 2, byrow = T))
 chisq.test(x = matrix(c(1045, 32, 88,  8), 2, 2, byrow = T))
 ```
 
-**Key is first argument must be all the info**. This is different from (incorrect) approach like
+**Key is first argument must be all the info**. This is different from
+(incorrect) approach like
 
 ```{r}
 chisq.test(everest$Survived,everest$Oxygen)
 ```
 
-This is comparing split among Survived and not to split (expected) using Oxygen!
+This is comparing split among Survived and not to split (expected) using
+Oxygen!
 
-So order has minimal input with 2 groups. Other test options necessitated by the warning
+So order has minimal input with 2 groups. Other test options
+necessitated by the warning
 
 ```{r}
 fisher.test(table(everest_expand$Oxygen, everest_expand$Survived))
@@ -123,7 +138,8 @@ Fisher again due to size
 fisher.test(table(everest_enriched_expand$Survived, everest_enriched_expand$Oxygen))
 ```
 
-Now we follow-up, and rows/columns matter. Note default is row and fdr method. I order results for ease of view
+Now we follow-up, and rows/columns matter. Note default is row and fdr
+method. I order results for ease of view
 
 ```{r}
 library(rcompanion)
@@ -169,27 +185,149 @@ Let’s look at some heart attack data. Read in the data using
 heart_attacks <- read.table("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/heartatk4R.txt",header=T, stringsAsFactors = T)
 ```
 
-Every entry is a person that has suffered a heart attack. More information on the dataset can be found at
+Every entry is a person that has suffered a heart attack. More
+information on the dataset can be found at
 
 http://statland.org/Software_Help/DataDesk/datafile.htm
 
 We want to again test if heart attacks occur equally across genders.
 
+H~0~: heart attacks occur equally across gender
+
+H~A~: heart attacks do not occur equally across gender
+
+```{r}
+table(heart_attacks$SEX)
+binom.test(7779, 7779+5065)
+```
+
+Since the p-value is below 0.01, I'm able to reject the null hypothesis,
+suggesting that males are more likely to have heart attacks.
+
+```{r}
+chisq.test(table(heart_attacks$SEX), p=c(.50, .50))
+```
+
 -   What if we know that males actually make up 50.8% of the population?
+
+```{r}
+table(heart_attacks$SEX)
+binom.test(7779, 7779+5065, .508)
+```
+
+The p-value remains below 0.01, suggesting that males are more likely to
+have heart attacks since we are still able to reject the null
+hypothesis.
+
+WORK:
+
+```{r}
+
+install.packages("readxl")  # If not already installed
+library(readxl)
+
+heart_attacks <- read.table("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/heartatk4R.txt",header=T, stringsAsFactors = T)
+
+
+observed <- table(heart_attacks$Gender, heart_attacks$HeartAttack)
+
+
+total_count <- sum(observed)
+expected_males <- total_count * 0.508
+expected_females <- total_count - expected_males
+expected <- c(expected_males, expected_females)
+
+observed <- observed + 0.5
+
+
+chi_square_test <- chisq.test(observed, p = c(0.5, 0.5))
+
+
+print(chi_square_test)
+```
 
 #### 2
 
 Still using the heart attack data, is survival independent of gender?
 
+H~0~: survival is independent of gender
+
+H~A~: survival is dependent on gender
+
+```{r}
+table(heart_attacks$SEX, heart_attacks$DIED)
+chisq.test(table(heart_attacks$SEX, heart_attacks$DIED))
+chisq.test(table(heart_attacks$DIED, heart_attacks$SEX))
+```
+
+*The p-value of \<.001, so i reject the null hypothesis that survival
+does not differ based on sex.*
+
+WORK:
+
+```{r}
+install.packages("readxl")  # If not already installed
+library(readxl)
+
+heart_attacks <- read.table("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/heartatk4R.txt", header = TRUE, stringsAsFactors = TRUE)
+
+observed <- observed + 0.5
+
+observed <- table(heart_attacks$Gender, heart_attacks$Survival)
+
+chi_square_test <- chisq.test(observed)
+
+print(chi_square_test)
+
+```
+
 #### 3
 
-For people that have a heart attack before they turn 30, is survival independent of gender?
+For people that have a heart attack before they turn 30, is survival
+independent of gender?
+
+H~0~: survival is independent of gender
+
+H~A~: survival is dependent on gender
+
+```{r}
+chisq.test(table(heart_attacks[heart_attacks$AGE < 30, "SEX"], 
+                 heart_attacks[heart_attacks$AGE <30, "DIED"]))
+
+chisq.test(table(heart_attacks[heart_attacks$AGE < 30, "SEX"], 
+                 heart_attacks[heart_attacks$AGE <30, "DIED"]))$expected
+```
+
+```{r}
+fisher.test(table(heart_attacks[heart_attacks$AGE < 30, "SEX"], 
+                  heart_attacks[heart_attacks$AGE <30, "DIED"]))
+```
+
+*The p-value is 1, so I fail to reject the null hypothesis that survival
+does not differ based on sex.*
+
+WORK:
+
+```{r}
+
+heart_attacks_before_30 <- heart_attacks[heart_attacks$Age < 30, ]
+
+observed <- table(heart_attacks_before_30$Gender, heart_attacks_before_30$Survival)
+
+observed <- observed + 0.5
+
+chi_square_test <- chisq.test(observed)
+
+print(chi_square_test)
+
+```
 
 ### Dolphins
 
 #### 4
 
-Data on dolphin behavior was collected off the coast of Iceland. Data is \@
+Data on dolphin behavior was collected off the coast of Iceland. Data is
+\@
 
 http://www.statsci.org/data/general/dolpacti.txt
 
@@ -197,13 +335,61 @@ Since this is a .txt file, not a .csv, you’ll need to use something like
 
 ```{r}
 dolphin <- read.table("http://www.statsci.org/data/general/dolpacti.txt", sep="", header = T, stringsAsFactors = T)
+
+dolphin
 ```
 
 More info on data \@
 
 http://www.statsci.org/data/general/dolpacti.html
 
-Is travelling independent of time of day? You’ll need to consider traveling vs not traveling due to different number of groups observed in each period. Carry out post-hoc tests if needed.
+Is travelling independent of time of day? You’ll need to consider
+traveling vs not traveling due to different number of groups observed in
+each period. Carry out post-hoc tests if needed.
+
+H~0~: travelling is independent of time of day
+
+H~A~: travelling is dependent on time of day
+
+```{r}
+travel_table <- as.table(matrix(c(6, 28+ 38, 6, 9, 14, 9, 13, 66), nrow = 4, byrow = T))
+
+colnames(travel_table) = c("travel", "not_travel")
+rownames(travel_table) = c("morning", "noon", "afternoon", "night")
+
+travel_table
+
+chisq.test(travel_table)
+
+chisq.test(travel_table)$expected
+```
+
+```{r}
+fisher.test(travel_table)
+
+library(rcompanion)
+pairwiseNominalIndependence(travel_table, compare = "row", method = "holm")
+```
+
+*The Fisher’s test provided a p-value of \<.001, so I rejected the null
+hypothesis that travelling is independent of time of day.*
+
+WORK:
+
+```{r}
+
+install.packages("readxl")  # If not already installed
+library(readxl)
+
+dolphin <- read.table("http://www.statsci.org/data/general/dolpacti.txt", sep = "", header = TRUE, stringsAsFactors = TRUE)
+
+observed <- table(dolphin$Traveling, dolphin$TimeOfDay) + 0.5
+
+chi_square_test <- chisq.test(observed)
+
+print(chi_square_test)
+
+```
 
 ### Smoking
 
@@ -213,4 +399,46 @@ Use data on smoking and exercise from
 
 http://www.r-tutor.com/elementary-statistics/goodness-fit/chi-squared-test-independence
 
-to determine if smoking is independent of exercise. You’ll need to input data manually. Carry out post-hoc tests if needed.
+to determine if smoking is independent of exercise. You’ll need to input
+data manually. Carry out post-hoc tests if needed.
+
+H~0~: *smoking is independent of exercise*
+
+H~A~: smoking is dependent of excersize
+
+```{r}
+smoke <- chisq.test(matrix(c(7, 1, 3, #spacing just for visual use
+                             87,18,84,
+                             12,3,4,
+                             9,1,7), nrow = 4, byrow = T))
+```
+
+```{r}
+smoke$expected
+
+fisher.test(matrix(c(7, 1, 3, #spacing just for visuals
+                     87,18,84,
+                     12,3,4,
+                     9,1,7), nrow = 4, byrow = T))
+
+```
+
+*The p-value is .4138, meainging I fail to reject the null hypothesis.
+This suggests that smoking is independent of exercise.*
+
+WORK:
+
+```{r}
+
+smoking <- c("Smoker", "Smoker", "Smoker", "Non-Smoker", "Non-Smoker", "Non-Smoker")
+exercise <- c("Sedentary", "Moderate", "Active", "Sedentary", "Moderate", "Active")
+
+data <- data.frame(smoking = smoking, exercise = exercise)
+
+print(data)
+
+chi_square_test <- chisq.test(table(data))
+
+print(chi_square_test)
+
+```
