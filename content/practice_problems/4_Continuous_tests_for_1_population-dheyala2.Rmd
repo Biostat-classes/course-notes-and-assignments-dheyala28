@@ -184,6 +184,7 @@ flies <- c(183.2, 149.0, 154.0, 167.2, 187.2, 158.0, 143.0 )
 ```
 
 ```{r}
+#t test
 estimates <- c(183.2, 149.0, 154.0, 167.2, 187.2, 158.0, 143.0)
 null_mean <- 161
 variance <- 275
@@ -233,7 +234,37 @@ H~0~: the mean is 205
 H~A~: the mean is not equal to 205
 
 ```{r}
+#z test
+strawberries <- c(239, 176, 235, 217, 234, 216, 318, 190, 181, 225)
+mu <- 205
+sigma <- sqrt(1500)
 
+sample_mean <- mean(strawberries)
+sample_sd <- sd(strawberries)
+
+standard_error <- sigma / sqrt(length(strawberries))
+
+z_value <- (sample_mean - mu) / standard_error
+
+p_value <- 2 * (1 - pnorm(abs(z_value)))
+
+result <- list(z_value = z_value, p_value = p_value)
+
+print(result)
+
+```
+
+**The p-value, 0.14, is greater than 0.05, suggesting that there is
+evidence that i fail to reject the null hypothesis. this suggests that
+the u=205.**
+
+```{r}
+#t test
+t.test(x=strawberries,mu = 205)
+```
+
+```{r}
+#t test
 yields <- c(239, 176, 235, 217, 234, 216, 318, 190, 181, 225)
 null_mean <- 205
 variance <- 1500
@@ -263,8 +294,57 @@ t_test_binary_variance
 ```
 
 **The p-value, 0.1903, is greater than 0.05, suggesting that there is
-evidence to not reject the null hypothesis. this suggests that the
-u=205.**
+evidence that i fail to reject the null hypothesis. this suggests that
+the u=205.**
+
+```{r}
+#rank transform
+wilcox.test(strawberries, mu=205)
+```
+
+**The p-value, 0.2023, is greater than 0.05, suggesting that there is
+evidence that i fail to reject the null hypothesis. this suggests that
+the u=205.**
+
+```{r}
+#binary transform
+SIGN.test(strawberries, md=205)
+```
+
+```         
+```
+
+```{r}
+#binary transform
+SIGN.test <- function(x, md) {
+ 
+  differences <- x - md
+  
+  n_positive <- sum(differences > 0)
+  n_negative <- sum(differences < 0)
+  
+  n_equal <- sum(differences == 0)
+  
+  statistic <- min(n_positive, n_negative)
+  
+  p_value <- 2 * pbinom(statistic, n_positive + n_negative + n_equal, 0.5)
+  
+  result <- list(statistic = statistic, p_value = p_value)
+  return(result)
+}
+
+strawberries <- c(239, 176, 235, 217, 234, 216, 318, 190, 181, 225)
+
+md <- 205
+
+result <- SIGN.test(strawberries, md)
+
+print(result)
+```
+
+**The p-value, 0.34, is greater than 0.05, suggesting that there is
+evidence that i fail to reject the null hypothesis. this suggests that
+the u=205.**
 
 #### 5
 
@@ -275,11 +355,11 @@ obtained from such nests and they yield 25 females and 5 males. Test the
 hypotheses that that: \* a) the sex ratio is 50% females \* b) the sex
 ratio is 80% females.
 
-a\) H~0~: The sex ratio is 50% females.
-H~A~: The sex ratio is not 50% females.
+a\) H~0~: The sex ratio is 50% females. H~A~: The sex ratio is not 50%
+females.
 
-b\) H~0~: The sex ratio is 80% females.
-H~A~: The sex ratio is not 80% females.
+b\) H~0~: The sex ratio is 80% females. H~A~: The sex ratio is not 80%
+females.
 
 ```{r}
 
@@ -319,7 +399,33 @@ you can use to assess the data.
 
 Undulation rates (in Hz): 0.9, 1.4, 1.2, 1.2, 1.3, 2.0, 1.4, 1.6
 
-#### 7
+I'll conduct a one-sample t-test to determine whether the observed mean
+undulation rate significantly differs from the hypothesized value of 1.4
+Hz. This is justified because we are comparing the mean undulation rate
+of the observed data to a known hypothesized value. The t-test assesses
+whether the difference between the sample mean and the hypothesized mean
+is statistically significant, considering the variability within the
+sample. It's appropriate for this scenario since we have a small sample
+size and wish to compare it to a population mean.
+
+```{r}
+
+undulation_rates <- c(0.9, 1.4, 1.2, 1.2, 1.3, 2.0, 1.4, 1.6)
+null_mean <- 1.4
+
+
+t_test <- t.test(undulation_rates, mu = null_mean)
+print(t_test)
+
+```
+
+H~0~: The observed mean undulation rate is 1.4 Hz H~A~: The observed
+mean undulation rate is different than 1.4 Hz
+
+The p-value is 0.8335, which is greater than 0.05, suggesting we fail to
+reject the null hypothesis. The observed mean undulation rate is 1.4 Hz.
+
+**7**
 
 Using data from Australian athletes
 (http://www.statsci.org/data/oz/ais.html for details), determine if the
@@ -330,4 +436,78 @@ techniques. Data at
 ```{r}
 sport <- read.table("http://www.statsci.org/data/oz/ais.txt", header = T, 
                     stringsAsFactors = T)
+```
+
+```{r}
+library(MKinfer)
+boot.t.test(sport[sport$Sex == "male", "Wt"], mu= 85.9)
+```
+
+Because the p-value is less than 0.05, we reject the null hypothesis,
+suggesting that *males training at the AIS have a lesser weight than the
+average Australian male.*
+
+WORK:
+
+```{r}
+
+install.packages("boot")
+library(boot)
+
+sport <- read.table("http://www.statsci.org/data/oz/ais.txt", header = TRUE, stringsAsFactors = TRUE)
+
+male_weights <- sport$weight[sport$sex == "M"]
+
+
+mean_weight_australian_male <- 85.9
+
+mean_diff <- function(data, indices) {
+  mean_weight_athlete <- mean(data[indices])
+  mean_weight_athlete - mean_weight_australian_male
+}
+```
+
+```{r}
+
+install.packages("boot")
+library(boot)
+
+bootstrap_results <- boot(male_weights, statistic = mean_diff, R = 10000)
+```
+
+```{r}
+
+install.packages("ggplot2")
+library(ggplot2)
+
+
+data_url <- "http://www.statsci.org/data/oz/ais.txt"
+population_unif <- read.table(data_url, header = TRUE)
+
+
+ggplot(population_unif, aes(x = Wt)) +
+  geom_histogram(color = "black", fill = "skyblue", bins = 20) +
+  labs(title = "Weight Distribution of Australian Athletes",
+       x = "Weight (kg)",
+       y = "Frequency")
+
+```
+
+```{r}
+
+number_of_simulations <- 1000
+
+sampling_experiment <- data.frame("observed_mean" = rep(NA, number_of_simulations))
+
+
+for (i in 1:number_of_simulations) {
+  sampling_experiment$observed_mean[i] <- mean(sample(population_unif$value, 50, replace = FALSE))
+}
+
+ggplot(sampling_experiment, aes(x = observed_mean)) +
+  geom_histogram(color = "black", fill = "skyblue", bins = 30) +
+  labs(title = "Distribution of Sample Means (n = 50)",
+       x = "Mean Weight (kg)",
+       y = "Frequency")
+
 ```
