@@ -95,6 +95,47 @@ use of coefficients and adjusted R^2^ values and where to find them.*
 
 ```{r}
 
+library(Rmisc)
+
+function_output <- summarySE(iris, measurevar="Petal.Length", groupvars =
+                               c("Species"))
+library(ggplot2)
+ggplot(function_output, aes(x=Species, y=Petal.Length)) +
+  geom_col(aes(fill=Species), size = 3) +
+  geom_errorbar(aes(ymin=Petal.Length-ci, ymax=Petal.Length+ci), size=1.5) +
+  ylab("Petal Length (cm)")+ggtitle("Petal Length of \n various iris species")+
+  theme(axis.title.x = element_text(face="bold", size=28), 
+        axis.title.y = element_text(face="bold", size=28), 
+        axis.text.y  = element_text(size=20),
+        axis.text.x  = element_text(size=20), 
+        legend.text =element_text(size=20),
+        legend.title = element_text(size=20, face="bold"),
+        plot.title = element_text(hjust = 0.5, face="bold", size=32))
+```
+
+```{r}
+petal <- lm(Petal.Length ~ Species, iris)
+plot(petal)
+
+library(car)
+Anova(petal, type = "III")
+```
+
+```{r}
+summary(petal)
+
+library(multcomp)
+comp_cholest <- glht(petal, linfct = mcp(Species = "Tukey"))
+summary(comp_cholest)
+```
+
+The p-value is below 0.01, rejecting the null hypothesis. This suggests
+that there is no difference between species.
+
+WORK:
+
+```{r}
+
 data(iris)
 
 anova_result <- aov(Petal.Length ~ Species, data = iris)
@@ -143,6 +184,27 @@ convince yourself that t-tests are special cases of ANOVAs, which are
 special cases of linear models!
 
 ```{r}
+fertilizer <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSUVowOKlmTic4ekL7LSbwDcqrsDSXv5K_c4Qyfcvz1lLE1_iINmGzy0zMGxY7z5DImlUErK4S2wY7Y/pub?gid=0&single=true&output=csv",
+                       stringsAsFactors = T)
+
+t.test(height ~ fertilizer, fertilizer, var.equal = T)
+```
+
+```{r}
+fert_lm <- lm(height ~ fertilizer, fertilizer)
+plot(fert_lm)
+summary(fert_lm)
+require(car)
+Anova(fert_lm, type = "III")
+```
+
+The p-value is below 0.05 using both methods, so i reject the null
+hypothesis, suggesting *that there is a difference among mean height of
+plants based on fertilizer.*
+
+WORK:
+
+```{r}
 str(plant_data)
 ```
 
@@ -184,6 +246,57 @@ location (DistrictPosition column) impacts yield (Tonn.Hect column)? If
 so, which areas are driving this distance?
 
 ```{r}
+cane <- read.table("https://docs.google.com/spreadsheets/d/e/2PACX-1vRjstKreIM6UknyKFQCtw2_Q6itY9iOAVWO1hUNZkBFL8mwVssvTevqgzV22YDKCUeJq0HBDrsBrf5O/pub?gid=971470377&single=true&output=tsv", header = T, stringsAsFactors = T)
+summary(cane)
+```
+
+```{r}
+cane_summary <- summarySE(cane, measurevar="Tonn.Hect", groupvars =
+                               c("DistrictPosition"))
+
+ggplot(cane_summary, aes(x=DistrictPosition, y=Tonn.Hect)) +
+  geom_col(size = 3) +
+  geom_errorbar(aes(ymin=Tonn.Hect-ci, ymax=Tonn.Hect+ci), size=1.5) +
+  ylab("Production (tonnes per hectare)") +
+  xlab("District Position") +
+  ggtitle("Production differs \n among locations") +
+  theme(axis.title.x = element_text(face="bold", size=28), 
+        axis.title.y = element_text(face="bold", size=28), 
+        axis.text.y  = element_text(size=20),
+        axis.text.x  = element_text(size=20), 
+        legend.text =element_text(size=20),
+        legend.title = element_text(size=20, face="bold"),
+        plot.title = element_text(hjust = 0.5, face="bold", size=32))
+```
+
+```{r}
+impact_district <- lm(Tonn.Hect ~ DistrictPosition, cane)
+summary(impact_district)
+
+plot(impact_district)
+
+require(WRS2)
+t1waybt(Tonn.Hect ~ DistrictPosition, cane)
+
+mcppb20(Tonn.Hect ~ DistrictPosition, cane)
+
+p <- mcppb20(Tonn.Hect ~ DistrictPosition, cane)
+p.adjust(as.numeric(p$comp[,6]), "holm")
+
+require(car)
+Anova(impact_district, type = "III")
+
+require(multcomp)
+comp_district <- glht(impact_district, linfct = mcp(DistrictPosition = "Tukey"))
+summary(comp_district)
+```
+
+SInce the p-value is below 0.05, I reject the null hypothesis that there
+is no difference, suggesting that there is a difference.
+
+WORK:
+
+```{r}
 
 install.packages("readr")  # If not already installed
 library(readr)
@@ -216,6 +329,39 @@ More information on the dataset is available at
 
 Is there evidence that FEV depends on gender? If so, which gender has
 the higher FEV score? How much variance does gender explain?
+
+```{r}
+fev <- read.table("http://www.statsci.org/data/general/fev.txt", header = T,
+                  stringsAsFactors = T)
+fev_summary <- summarySE(fev, measurevar="FEV", groupvars =
+                               c("Sex"))
+
+ggplot(fev_summary, aes(x=Sex, y=FEV)) +
+  geom_col(size = 3) +
+  geom_errorbar(aes(ymin=FEV-ci, ymax=FEV+ci), size=1.5) +
+  ylab("FEV (liters)") +
+  xlab("Sex") +
+  ggtitle("FEV differs \n among males and females") +
+  theme(axis.title.x = element_text(face="bold", size=28), 
+        axis.title.y = element_text(face="bold", size=28), 
+        axis.text.y  = element_text(size=20),
+        axis.text.x  = element_text(size=20), 
+        legend.text =element_text(size=20),
+        legend.title = element_text(size=20, face="bold"),
+        plot.title = element_text(hjust = 0.5, face="bold", size=32))
+
+fev_gender <- lm(FEV ~ Sex, fev)
+plot(fev_gender)
+```
+
+```{r}
+Anova(fev_gender, type = "III")
+summary(fev_gender)
+```
+
+The p-value is below 0.05, so I reject the null hypothesis.
+
+WORK:
 
 ```{r}
 
@@ -268,6 +414,51 @@ groups
 -   Using rank transform analysis
 -   Using a permutation test
 -   Using a bootstrap test
+
+```{r}
+#estimating variance from data 
+
+drug_b <- c( 8.8, 8.4, 7.9, 8.7, 9.1, 9.6)
+drug_g <- c(9.9, 9.0, 11.1, 9.6, 8.7, 10.4, 9.5)
+t.test(drug_b, drug_g)
+```
+
+the p-value is below 0.05, so I reject the null hypothesis, suggesting
+*that the mean clotting times are not the same for the two drugs.*
+
+```{r}
+#rank transform analysis
+wilcox.test(drug_b, drug_g)
+```
+
+The p-value is greater than 0.05, so I fail to reject the null
+hypothesis, suggesting that *the mean clotting times are not the same
+for the two drugs.*
+
+```{r}
+#permutation test 
+
+require(coin) #requires data_frame
+clotting <- data.frame(drug = c(rep("drug_b", length(drug_b)), rep("drug_g", 
+                                                                   length(drug_g))),
+                       clotting = c(drug_b, drug_g))
+clotting$drug <- factor(clotting$drug)
+independence_test(clotting ~ drug, clotting)
+```
+
+The p-value is below, so I reject the null hypothesis.
+
+```{r}
+#bootstrapping 
+
+library(MKinfer)
+boot.t.test(drug_b, drug_g)
+```
+
+The p-value is below 0.05, so I reject the null hypothesis, suggesting
+*that the mean clotting times are not the same for the two drugs.*
+
+WORK:
 
 ```{r}
 
@@ -347,6 +538,42 @@ Test the hypothesis that odd and typical feathers did not differ using
 -   a Student's t test and/or lm
 -   a rank test
 -   bootstrapping
+
+```{r}
+#t test 
+feather <-  read.csv("https://raw.githubusercontent.com/jsgosnell/CUNY-BioStats/master/datasets/wiebe_2002_example.csv", stringsAsFactors = T)
+t.test(Color_index ~ Feather, data=feather, paired=TRUE)
+```
+
+The p-value is below 0.05, so I reject the null hypothesis, suggesting
+that feather color is not the same between odd and typical feathers.
+
+```{r}
+#rank test 
+wilcox.test(Color_index ~ Feather, data=feather, paired=TRUE)
+```
+
+The p-value is below 0.05, so I reject the null hypothesis
+
+```{r}
+#binary test 
+library(BSDA)
+SIGN.test(feather[feather$Feather == "Odd", "Color_index"], 
+          feather[feather$Feather == "Typical", "Color_index"])
+```
+
+The p-value is below 0.05, so I reject the null hypothesis.
+
+```{r}
+#bootstrapping 
+library(MKinfer)
+boot.t.test(Color_index ~ Feather, data=feather, paired=TRUE)
+```
+
+The p-value is below 0.05, so I reject the null hypothesis, *suggesting
+that feather color is not the same between odd and typical feathers.*
+
+WORK:
 
 ```{r}
 
